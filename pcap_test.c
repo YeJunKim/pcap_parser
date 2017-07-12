@@ -1,63 +1,83 @@
 #include <pcap.h>
+#include <stdio.h>
 
-void dump(const u_char *packet,int len);
-			
-int main()
+void print_packet(const u_char *packet, int len)
 {
-    struct pcap_pkthdr header;
-    unsigned char *packet;
-    char errbuf[PCAP_ERRBUF_SIZE];
-    char *device;
-    int i;
-    int count = 1;
-  
-    while(1)
-    {
-        pcap_t *pcap_handle;
-        device = pcap_lookupdev(errbuf);
-  
-        if(device == 0)
-            printf("Err_lookupdev%s\n",errbuf);
-
-        printf("try[%d]...device: %s \n",count, device);
-
-        pcap_handle = pcap_open_live(device, 4096, 1, 1000, errbuf);
-        
-        if(pcap_handle == 0)
-            printf("Err_pcap_open_live...%s\n",errbuf);
-        
-
-        packet = pcap_next(pcap_handle, &header);    
-        
-        if (header.len>0)
-           dump(packet, header.len);
-        
-        packet = '\0';
-        count++;
-
-        pcap_close(pcap_handle);
-    }
-  
-    return 0;
-}
-
-
-void dump(const u_char *packet,int len)
-{
-    int i = 0;    
-  
+    int i = 0;
+    
     for(i=0; i<len; ++i)
     {
         if(*packet < 16)
             printf("0x0%x ", *packet);
         else
-            printf("0x%x ",*packet);
+            printf("0x%x ", *packet);
+
         packet++;
 
         if(i%16 == 15)
             printf("\n");
+    }
+
+    printf("\nEnd grep packet.\n\n\n");
+}
+
+int main(int argc, char *argv[])
+{
+	pcap_t *handle;			/* Session handle */
+	char *dev;			/* The device to sniff on */
+	char errbuf[PCAP_ERRBUF_SIZE];	/* Error string */
+	struct bpf_program fp;		/* The compiled filter */
+	char filter_exp[] = "port 80";	/* The filter expression */
+	bpf_u_int32 mask;		/* Our netmask */
+	bpf_u_int32 net;		/* Our IP */
+	struct pcap_pkthdr header;	/* The header that pcap gives us */
+	const u_char *packet;		/* The actual packet */
+    int count = 1;
     
-  }
-  
-  printf("\n\n\n");
+
+    while(1)
+    {
+	    /* Define the device */
+    	dev = pcap_lookupdev(errbuf);
+    	if (dev == NULL) {
+    		fprintf(stderr, "Couldn't find default device: %s\n", errbuf);
+    		return(2);
+    	}
+    	/* Find the properties for the device */
+    	if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1) {
+    		fprintf(stderr, "Couldn't get netmask for device %s: %s\n", dev, errbuf);
+    		net = 0;
+    		mask = 0;
+    	}
+    	/* Open the session in promiscuous mode */
+    	handle = pcap_open_live(dev, BUFSIZ, 1, 100, errbuf);
+    	if (handle == NULL) {
+    		fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
+     		return(2);
+	    }
+	    /* Compile and apply the filter */
+	    if (pcap_compile(handle, &fp, filter_exp, 0, net) == -1) {
+	    	fprintf(stderr, "Couldn't parse filter %s: %s\n", filter_exp, pcap_geterr(handle));
+	    	return(2);
+	    }
+	
+        if (pcap_setfilter(handle, &fp) == -1) {
+		    fprintf(stderr, "Couldn't install filter %s: %s\n", filter_exp, pcap_geterr(handle));
+		    return(2);
+	    }
+	    
+        /* Grab a packet */
+	    packet = pcap_next(handle, &header);
+	
+
+        printf("Start [%d] grep packet.\n", count);
+        print_packet(packet, header.len);
+    
+        count++;
+
+        /* And close the session */
+	    pcap_close(handle);
+    }
+	
+    return(0);
 }
