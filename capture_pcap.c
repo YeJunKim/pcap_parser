@@ -11,7 +11,7 @@ void print_packet(const u_char * packet, int len) {
                 if (i == 0 || i == 6)
                     printf("0%x", * packet);
                 else
-                    printf(" : %x", * packet);
+                    printf(" : 0%x", * packet);
 
                 if (i == 5)
                     printf("    <<<This is mac.dst\n");
@@ -20,7 +20,7 @@ void print_packet(const u_char * packet, int len) {
             }
             else {
                 if (i == 0)
-                    printf("0%x", * packet);
+                    printf("%x", * packet);
                 else
                     printf(" : %x", * packet);
                 
@@ -31,7 +31,7 @@ void print_packet(const u_char * packet, int len) {
             }
         }
         else if(i >= 26 && i <= 33)
-        {
+        {   
             if (i == 26 || i == 30)
                 printf("%d", * packet);
             else
@@ -76,7 +76,9 @@ int main(int argc, char * argv[]) {
     bpf_u_int32 net; /* Our IP */
     struct pcap_pkthdr header; /* The header that pcap gives us */
     const u_char * packet; /* The actual packet */
-    int count = 1;
+    int j = 0;
+
+    printf("Start packet capture!\n");
 
     while (1) {
         /* Define the device */
@@ -111,16 +113,15 @@ int main(int argc, char * argv[]) {
         /* Grab a packet */
         packet = pcap_next(handle, & header);
 
-        printf("Start packet capture!\n");
         if (header.len != 0) {
-            printf("-------------------capture[%d] grep packet.------------------------\n", count);
+            printf("-------------------grep packet------------------------\n");
             print_packet(packet, header.len);
-            printf("-------------------------------------------------------------------\n");
+            printf("------------------------------------------------------\n");
         }
-        count++;
 
         /* And close the session */
         pcap_close(handle);
+        j++;
     }
 
     return (0);
