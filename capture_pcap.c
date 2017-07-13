@@ -8,50 +8,60 @@ void print_packet(const u_char * packet, int len) {
         if(i<=11)
         {
             if ( * packet < 16) {
-                printf("0%x : ", * packet);
+                if (i == 0 || i == 6)
+                    printf("0%x", * packet);
+                else
+                    printf(" : %x", * packet);
+
                 if (i == 5)
-                    printf("<<<This is mac.dst\n");
+                    printf("    <<<This is mac.dst\n");
                 else if (i == 11)
-                    printf("<<<This is mac.src\n");
+                    printf("    <<<This is mac.src\n");
             }
             else {
-                printf("%x : ", * packet);
+                if (i == 0)
+                    printf("0%x", * packet);
+                else
+                    printf(" : %x", * packet);
+                
                 if (i == 5)
-                    printf("<<<This is mac.dst\n");
+                    printf("    <<<This is mac.dst\n");
                 else if (i == 11)
-                    printf("<<<This is mac.src\n");
+                    printf("    <<<This is mac.src\n");
             }
         }
-        else if(i >= 26 && i <= 37)
+        else if(i >= 26 && i <= 33)
         {
+            if (i == 26 || i == 30)
+                printf("%d", * packet);
+            else
+                printf(".%d", * packet);
+            if (i == 29)
+                printf("    <<<This is ip.src\n");
+            else if (i == 33)
+                 printf("    <<<This is ip.dst\n");
+            
+        }
+        else if(i >= 34 && i <= 37)
+        {
+            if (i == 34 || i == 36)
+                printf("0x");
             if ( * packet < 16) {
-                printf("%d . ", * packet);
-                if (i == 29)
-                    printf("<<<ip.src\n");
-                else if (i == 33)
-                    printf("<<<ip.dst\n");
-                else if (i == 35)
-                    printf("<<<port.src\n");
+                printf("0%x", * packet);
+                if (i == 35)
+                    printf("    <<<This is port.src\n");
                 else if (i == 37)
-                    printf("<<<port.dst\n");
+                    printf("    <<<This is port.dst\n");
             }
-            else {
-                printf("%d . ", * packet);
-                if (i == 29)
-                    printf("<<<ip.src\n");
-                else if (i == 33)
-                    printf("<<<ip.dst\n");
-                else if (i == 35)
-                    printf("<<<port.src\n");
+            else{
+                printf("%x", * packet);
+                if (i == 35)
+                    printf("    <<<This is port.src\n");
                 else if (i == 37)
-                    printf("<<<port.dst\n");
+                    printf("    <<<This is port.dst\n");
             }
-        } 
-
-
+        }
         packet++;
-
-
     }
     printf("\nEnd grep packet.\n\n\n");
 }
@@ -105,7 +115,7 @@ int main(int argc, char * argv[]) {
         if (header.len != 0) {
             printf("-------------------capture[%d] grep packet.------------------------\n", count);
             print_packet(packet, header.len);
-            printf("-------------------------------------------------------------------");
+            printf("-------------------------------------------------------------------\n");
         }
         count++;
 
