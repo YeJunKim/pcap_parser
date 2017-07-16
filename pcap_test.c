@@ -39,9 +39,6 @@ int mac_addr()
 {
 		int i,j = 0;
         const u_char *packet;
-        u_short ether_type; 
-        memcpy(&ether_type, packet+12, 2);
-        ether_type=ntohs(ether_type);
 
         printf("mac.dst: ");
         for(i=0;i<5;i++)
