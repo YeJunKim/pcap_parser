@@ -34,80 +34,30 @@ typedef struct udp_header{
     u_short crc;            // Checksum
 }udp_header;
 
-int print_packet(const u_char * packet, int len) {
-    int i = 0;
-    for (i = 0; i < len; ++i) {
-        if(i<=11)
-        {
-            if ( * packet < 16) {
-                if (i == 0)
-                    printf("mac.dst : ");
-                else if (i == 6)
-                    printf("\nmac.src : ");
 
-                if (i == 0 || i == 6)
-                    printf("0%x", * packet);
-                else
-                    printf(" : 0%x", * packet);
-
-
-            }
-            else {
-                if (i == 0)
-                    printf("mac.dst : ");
-                else if (i == 6)
-                    printf("\nmac.src : ");
-                if (i == 0)
-                    printf("%x", * packet);
-                else
-                    printf(" : %x", * packet);
-                
-
-            }
-        }
-        packet++;
-    }
-}
-
-int capture_packet()
+int mac_addr()
 {
-    pcap_t * handle; /* Session handle */
-    char * dev; /* The device to sniff on */
-    char errbuf[PCAP_ERRBUF_SIZE]; /* Error string */
-    struct bpf_program fp; /* The compiled filter */
-    bpf_u_int32 mask; /* Our netmask */
-    bpf_u_int32 net; /* Our IP */
-    struct pcap_pkthdr header; /* The header that pcap gives us */
-    const u_char * packet; /* The actual packet */
- 
+		int i,j = 0;
+        const u_char *packet;
+        u_short ether_type; 
+        memcpy(&ether_type, packet+12, 2);
+        ether_type=ntohs(ether_type);
 
-    
-        /* Define the device */
-        dev = pcap_lookupdev(errbuf);
-        if (dev == NULL) {
-            fprintf(stderr, "Couldn't find default device: %s\n", errbuf);
-        }
-        /* Find the properties for the device */
-        if (pcap_lookupnet(dev, & net, & mask, errbuf) == -1) {
-            fprintf(stderr, "Couldn't get netmask for device %s: %s\n", dev, errbuf);
-            net = 0;
-            mask = 0;
-        }
-        /* Open the session in promiscuous mode */
-        handle = pcap_open_live(dev, BUFSIZ, 1, 100, errbuf);
-        if (handle == NULL) {
-            fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
+        if (ether_type!=0x0800)
+        {
+                printf("ether type wrong\n");
+                return ;
         }
 
-        /* Grab a packet */
-        packet = pcap_next(handle, & header);
+        printf("mac.dst: ");
+        for(i=0;i<5;i++)
+                printf("%02x:", packet[i]); 
+        printf("%02x\n", packet[i+1]);
 
-        if (header.len != 0) {
-            print_packet(packet, header.len);
-        }
-
-        /* And close the session */
-        pcap_close(handle);
+        printf("mac.src : ");
+        for(j=6;j<11;j++)
+                printf("%02x:", packet[j]);
+        printf("%02x\n", packet[j+1]);
 }
 
 void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_char *pkt_data)
@@ -133,8 +83,8 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
     /* convert from network byte order to host byte order */
     sport = ntohs( uh->sport );
     dport = ntohs( uh->dport );
-
-
+    
+    mac_addr();
     /* print ip addresses and udp ports */
     printf("src ip : %d.%d.%d.%d\nsrc port : %d \ndst ip : %d.%d.%d.%d\ndst port : %d\n",
         ih->saddr.byte1,
@@ -147,8 +97,6 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
         ih->daddr.byte3,
         ih->daddr.byte4,
         dport);
-    capture_packet();
-
     printf("\n-------------------------------------------------------------------------------\n");
 }
 
