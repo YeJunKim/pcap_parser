@@ -43,12 +43,6 @@ int mac_addr()
         memcpy(&ether_type, packet+12, 2);
         ether_type=ntohs(ether_type);
 
-        if (ether_type!=0x0800)
-        {
-                printf("ether type wrong\n");
-                return ;
-        }
-
         printf("mac.dst: ");
         for(i=0;i<5;i++)
                 printf("%02x:", packet[i]); 
