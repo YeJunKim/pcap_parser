@@ -48,8 +48,6 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
     udp_header *uh;
     u_int ip_len;
     u_short sport,dport;
-    time_t local_tv_sec;
-    int i;
 
     printf("-------------------------------------------------------------------------------\n");
     /* print timestamp and length of the packet */
@@ -83,18 +81,16 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
 }
 
 int main(int argc, char * argv[]) {
-    pcap_t * handle; /* Session handle */
+    pcap_t * handle; 
     char * dev;
-    char errbuf[PCAP_ERRBUF_SIZE]; /* Error string */
-    struct pcap_pkthdr header; /* The header that pcap gives us */
+    char errbuf[PCAP_ERRBUF_SIZE]; 
 
-
-        dev = pcap_lookupdev(errbuf);
-        handle = pcap_open_live(dev, BUFSIZ, 1, 0, errbuf);
+    dev = pcap_lookupdev(errbuf);
+    handle = pcap_open_live(dev, BUFSIZ, 1, 0, errbuf);
         
-            printf("-------------------grep packet------------------------\n");
-            pcap_loop(handle, 0, packet_handler, NULL);
-            printf("------------------------------------------------------\n");
-        pcap_close(handle);
-    return (0);
+    printf("-------------------grep packet------------------------\n");
+    pcap_loop(handle, 0, packet_handler, NULL);
+    printf("------------------------------------------------------\n");
+    pcap_close(handle);
+    return  0;
 }
