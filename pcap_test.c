@@ -45,13 +45,22 @@ int mac_addr()
         printf("%02x\n", packet[j+1]);
 }
 
-void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_char *pkt_data)
+int main()
 {
     ip_header *ih;
     udp_header *uh;
     eth_address *eh;
     u_int ip_len;
     u_short sport, dport;
+    pcap_t * handle;
+    char * dev;
+    char errbuf[PCAP_ERRBUF_SIZE];
+    struct pcap_pkthdr *header;
+    const u_char *packet;
+    const u_char *pkt_data;
+
+    dev = pcap_lookupdev(errbuf);
+    handle = pcap_open_live(dev, BUFSIZ, 1, 0, errbuf);
 
     printf("-------------------------------------------------------------------------------\n");
     printf("len:%d \n", header->len);
@@ -82,19 +91,14 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
         ih->daddr.byte3,
         ih->daddr.byte4);
     printf("\n-------------------------------------------------------------------------------\n");
-}
+    
+    //if (pcap_next_ex(handle, &header, &packet))
+    //{
 
-int main(int argc, char * argv[]) {
-    pcap_t * handle; 
-    char * dev;
-    char errbuf[PCAP_ERRBUF_SIZE]; 
+        printf("-------------------grep packet------------------------\n");
+        printf("------------------------------------------------------\n");
+        pcap_close(handle);
 
-    dev = pcap_lookupdev(errbuf);
-    handle = pcap_open_live(dev, BUFSIZ, 1, 0, errbuf);
-        
-    printf("-------------------grep packet------------------------\n");
-    pcap_loop(handle, 0, packet_handler, NULL);
-    printf("------------------------------------------------------\n");
-    pcap_close(handle);
+
     return  0;
 }
