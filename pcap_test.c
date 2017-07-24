@@ -1,29 +1,32 @@
 #include <pcap.h> 
 #include <stdio.h>
 #include <time.h>
+#include <stdint.h>
 #include <arpa/inet.h>
 
-/* 4 bytes IP address */
 typedef struct ip_address{
-    u_char byte1;
-    u_char byte2;
-    u_char byte3;
-    u_char byte4;
+    uint8_t byte1;
+    uint8_t byte2;
+    uint8_t byte3;
+    uint8_t byte4;
 }ip_address;
 
-/* IPv4 header */
 typedef struct ip_header{
-    u_char  ver_ihl;        // Version (4 bits) + Internet header length (4 bits)
-    ip_address  saddr;      // Source address
-    ip_address  daddr;      // Destination address
+    uint8_t  ver_ihl;    
+    ip_address  saddr;      
+    ip_address  daddr;      
 }ip_header;
 
-/* UDP header*/
 typedef struct udp_header{
-    u_short sport;          // Source port
-    u_short dport;          // Destination port
-    u_short len;            // Datagram length
+    u_short sport;          
+    u_short dport;      
+    uint16_t len;        
 }udp_header;
+
+typedef struct ethernet_address{
+    uint8_t smac;
+    uint8_t dmac;
+}eth_address;
 
 
 int mac_addr()
@@ -46,37 +49,38 @@ void packet_handler(u_char *param, const struct pcap_pkthdr *header, const u_cha
 {
     ip_header *ih;
     udp_header *uh;
+    eth_address *eh;
     u_int ip_len;
-    u_short sport,dport;
+    u_short sport, dport;
 
     printf("-------------------------------------------------------------------------------\n");
-    /* print timestamp and length of the packet */
     printf("len:%d \n", header->len);
 
-    /* retireve the position of the ip header */
-    ih = (ip_header *) (pkt_data + 14); //length of ethernet header
+    ih = (ip_header *) (pkt_data + 14); 
 
-    /* retireve the position of the udp header */
     ip_len = (ih->ver_ihl & 0xf) * 4;
     uh = (udp_header *) ((u_char*)ih + ip_len);
 
-    /* convert from network byte order to host byte order */
-    sport = ntohs( uh->sport );
-    dport = ntohs( uh->dport );
+    eh = (eth_address *) (u_char*)(pkt_data);
+
+    //printf("src port : %s\n", inet_ntop(AF_INET, &(uh->sport), sport, 100 ));
+    //printf("dest port : %s\n", inet_ntop(AF_INET, &(uh->dport), dport, 100 ));
     
+    
+    printf("src port : %d\n", ntohs(uh->sport));
+    printf("dest port : %d\n", ntohs(uh->dport));
+
     mac_addr();
-    /* print ip addresses and udp ports */
-    printf("src ip : %d.%d.%d.%d\nsrc port : %d \ndst ip : %d.%d.%d.%d\ndst port : %d\n",
+    printf("src ip : %d.%d.%d.%d\ndst ip : %d.%d.%d.%d\n",
         ih->saddr.byte1,
         ih->saddr.byte2,
         ih->saddr.byte3,
         ih->saddr.byte4,
-        sport,
+
         ih->daddr.byte1,
         ih->daddr.byte2,
         ih->daddr.byte3,
-        ih->daddr.byte4,
-        dport);
+        ih->daddr.byte4);
     printf("\n-------------------------------------------------------------------------------\n");
 }
 
