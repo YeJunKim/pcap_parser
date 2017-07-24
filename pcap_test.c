@@ -29,24 +29,9 @@ typedef struct ethernet_address{
 }eth_address;
 
 
-int mac_addr()
-{
-        int i,j = 0;
-        const u_char *packet;
-
-        printf("mac.dst: ");
-        for(i=0;i<5;i++)
-                printf("%02x:", packet[i]); 
-        printf("%02x\n", packet[i+1]);
-
-        printf("mac.src : ");
-        for(j=6;j<11;j++)
-                printf("%02x:", packet[j]);
-        printf("%02x\n", packet[j+1]);
-}
-
 int main()
 {
+	int i, j;
     ip_header *ih;
     udp_header *uh;
     eth_address *eh;
@@ -62,42 +47,49 @@ int main()
     dev = pcap_lookupdev(errbuf);
     handle = pcap_open_live(dev, BUFSIZ, 1, 0, errbuf);
 
-    printf("-------------------------------------------------------------------------------\n");
-    printf("len:%d \n", header->len);
 
-    ih = (ip_header *) (pkt_data + 14); 
 
-    ip_len = (ih->ver_ihl & 0xf) * 4;
-    uh = (udp_header *) ((u_char*)ih + ip_len);
+    if (pcap_next_ex(handle, &header, &packet))
+    {
 
-    eh = (eth_address *) (u_char*)(pkt_data);
+        printf("-------------------------------------------------------------------------------\n");
+        printf("len:%d \n", header->len);
 
-    //printf("src port : %s\n", inet_ntop(AF_INET, &(uh->sport), sport, 100 ));
-    //printf("dest port : %s\n", inet_ntop(AF_INET, &(uh->dport), dport, 100 ));
-    
-    
-    printf("src port : %d\n", ntohs(uh->sport));
-    printf("dest port : %d\n", ntohs(uh->dport));
+        ih = (ip_header *) (pkt_data + 14); 
 
-    mac_addr();
-    printf("src ip : %d.%d.%d.%d\ndst ip : %d.%d.%d.%d\n",
-        ih->saddr.byte1,
-        ih->saddr.byte2,
-        ih->saddr.byte3,
-        ih->saddr.byte4,
+        ip_len = (ih->ver_ihl & 0xf) * 4;
+        uh = (udp_header *) ((u_char*)ih + ip_len);
 
-        ih->daddr.byte1,
-        ih->daddr.byte2,
-        ih->daddr.byte3,
-        ih->daddr.byte4);
-    printf("\n-------------------------------------------------------------------------------\n");
-    
-    //if (pcap_next_ex(handle, &header, &packet))
-    //{
+        eh = (eth_address *) (u_char*)(pkt_data);
+          
+        printf("mac.dst: ");
+        for(i=0;i<5;i++)
+    		printf("%02x:", packet[i]);
+        printf("%02x\n", packet[i+1]);
+          
+        printf("mac.src : ");
+        for(j=6;j<11;j++)
+		    printf("%02x:", packet[j]);
+        printf("%02x\n", packet[j+1]);
 
-        printf("-------------------grep packet------------------------\n");
-        printf("------------------------------------------------------\n");
-        pcap_close(handle);
+
+        printf("src port : %d\n", ntohs(uh->sport));
+        printf("dest port : %d\n", ntohs(uh->dport));
+
+
+        printf("src ip : %d.%d.%d.%d\ndst ip : %d.%d.%d.%d\n",
+            ih->saddr.byte1,
+            ih->saddr.byte2,
+            ih->saddr.byte3,
+            ih->saddr.byte4,
+
+            ih->daddr.byte1,
+            ih->daddr.byte2,
+            ih->daddr.byte3,
+            ih->daddr.byte4);
+        printf("\n-------------------------------------------------------------------------------\n");
+    }
+    pcap_close(handle);
 
 
     return  0;
